@@ -362,6 +362,7 @@ prescribers_test  <-prescribers_rand[20001:25000, ]
 ```{r}
 library(rpart)
 
+set.seed(123)
 prescribers_rpart <- rpart(prescribers_train$Opioid.Prescriber~., method="class", parms = list(split="gini"), data=prescribers_train)
 
 
@@ -408,10 +409,11 @@ Check out this [vignette](http://www.milbo.org/rpart-plot/prp.pdf) on plotting r
 
 # A Note on the Drugs in Decision Tree
 
-CIPROFLOXACIN.HCL: used to treat a variety of bacterial infection.  
 LEVOTHROXINE.SODIUM: used to treat underactive thyroid (hypothyrodism).  
 MELOXICAM: nonsteroid anti-inflammatory drug.  
-LYRICA: used to treat pain caused by nerve damage due to diabetes, shingles, spinal cord injury, and fibromyalgia; seizures  
+PREDNISONE: uses to decease immune system's responses to reduce sweling and allergic-tpe reactions.
+SPIRIVA: controls and prevents symptons caused by ongoing lung disease. 
+SULFAMETHOZAZOLE.TRIMETHOPRIM: uses to treat wide variety of bacterial infections & certain type of pneumonia.
 
 
 # Evaluating Model Performance
@@ -466,7 +468,7 @@ Method 3: Manually prune the tree until desired result is achieved.
 
 
 ```{r}
-Pruned_prescribers_rpart <-prune(prescribers_rpart,cp=.05, minsplit=10, minbucket=round(minsplit/3)) # Going with 4 splits
+Pruned_prescribers_rpart <-prune(prescribers_rpart,cp=.07) #Change the cp and see what happens.
 
 plot(Pruned_prescribers_rpart, uniform=TRUE,main="Classification Tree for Opioid Prescribers")
 text(Pruned_prescribers_rpart, use.n=TRUE, all=TRUE, cex=.8)
@@ -506,34 +508,33 @@ Also refer to Section 4.3.2 in **James et al.** (page 133).
 ## Train Model
 
 ```{r}
-prescribers_train_logit<-prescribers_train[,c(1,44,126,137,139,298,328)]
+prescribers_train_logit<-prescribers_train[,c(1,126,139,186,206,209,328,298)]
 
 prescribers_train_logit$LEVOTHYROXINE.SODIUM.recode<-ifelse(prescribers_train_logit$LEVOTHYROXINE.SODIUM<22,"no","yes")
 
-prescribers_train_logit$CIPROFLOXACIN.HCL.recode<-ifelse(prescribers_train_logit$CIPROFLOXACIN.HCL<6,"no","yes")
-
 prescribers_train_logit$MELOXICAM.recode<-ifelse(prescribers_train_logit$MELOXICAM<6,"no","yes")
 
-prescribers_train_logit$LYRICA.recode<-ifelse(prescribers_train_logit$LYRICA<12,"no","yes")
+prescribers_train_logit$PREDNISONE.recode<-ifelse(prescribers_train_logit$PREDNISONE<6,"no","yes")
 
-prescribers_train_logit[,c(2:5)]<-NULL
+prescribers_train_logit$SPIRIVA.recode<-ifelse(prescribers_train_logit$SPIRIVA<6,"no","yes")
+
+prescribers_train_logit$SULFAMETHOXAZOLE.TRIMETHOPRIM.recode<-
+  ifelse(prescribers_train_logit$SULFAMETHOXAZOLE.TRIMETHOPRIM<6,"no","yes")
+
+prescribers_train_logit[,c(2:6)]<-NULL
 
 names(prescribers_train_logit)
 
-prescriber.logit <- glm(Opioid.Prescriber~., data=prescribers_train_logit, family=binomial()) #Fit a logistic regression
+prescriber.logit <- glm(Opioid.Prescriber~.+PREDNISONE.recode:SPIRIVA.recode+PREDNISONE.recode:SULFAMETHOXAZOLE.TRIMETHOPRIM.recode, data=prescribers_train_logit, family=binomial()) #Fit a logistic regression
 summary(prescriber.logit) #coefficients are presented as log-odds (probabilities on logit scale)
 
 exp(cbind(Odds_Ratio=coef(prescriber.logit))) #Take exponent of log odds gives "odds" ratio.
 
 ```
 
-The odds of an Emergency Medicine (EM) doctor prescribing opioids is 32 times higher than their non-EM counterparts. 
+The odds of an Emergency Medicine (EM) doctor prescribing opioids is 27 times higher than their non-EM counterparts. 
 
 The odds of a Surgeon prescribing opioids is 18 times higher than their non-Surgeon counterparts.
-
-Doctors who prescribe CIPROFLOXACIN.HCL are four times more likely to prescribe opioids than doctors who do not prescribe CIPROFLOXACIN.HCL.
-
-Doctors who prescribe LEVOTHROXINE.SODIUM are five times more likely to prescribe opioids than doctors who do not prescribe LEVOTHROXINE.SODIUM.
 
 And so on...
 
@@ -549,17 +550,20 @@ anova(prescriber.logit,test="Chisq")
 ## Validate Model
 
 ```{r}
-prescribers_test_logit<-prescribers_test[,c(1,44,126,137,139,298,328)]
+prescribers_test_logit<-prescribers_test[,c(1,126,139,186,206,209,328,298)]
 
 prescribers_test_logit$LEVOTHYROXINE.SODIUM.recode<-ifelse(prescribers_test_logit$LEVOTHYROXINE.SODIUM<22,"no","yes")
 
-prescribers_test_logit$CIPROFLOXACIN.HCL.recode<-ifelse(prescribers_test_logit$CIPROFLOXACIN.HCL<6,"no","yes")
-
 prescribers_test_logit$MELOXICAM.recode<-ifelse(prescribers_test_logit$MELOXICAM<6,"no","yes")
 
-prescribers_test_logit$LYRICA.recode<-ifelse(prescribers_test_logit$LYRICA<12,"no","yes")
+prescribers_test_logit$PREDNISONE.recode<-ifelse(prescribers_test_logit$PREDNISONE<6,"no","yes")
 
-prescribers_test_logit[,c(2:5)]<-NULL
+prescribers_test_logit$SPIRIVA.recode<-ifelse(prescribers_test_logit$SPIRIVA<6,"no","yes")
+
+prescribers_test_logit$SULFAMETHOXAZOLE.TRIMETHOPRIM.recode<-
+  ifelse(prescribers_test_logit$SULFAMETHOXAZOLE.TRIMETHOPRIM<6,"no","yes")
+
+prescribers_test_logit[,c(2:6)]<-NULL
 ```
 
 
@@ -581,7 +585,7 @@ prescribers_test_logit$predict.opioid.prescriber<-predict(prescriber.logit, newd
 
 ### 95% confidence interval for predicted probability
 ```{r}
-prescribers_test_logit[,8]<-NULL
+prescribers_test_logit[,9]<-NULL
 
 prescribers_test_logit_CI<-cbind(prescribers_test_logit,predict(prescriber.logit, newdata=prescribers_test_logit,type="link",se=TRUE))
                                  
