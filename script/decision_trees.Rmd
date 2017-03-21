@@ -7,7 +7,7 @@ output: html_document
 
 # R Packages
 
-The packages you will need to install for the week are **class**, **gmodels**, **rpart**, **rpart.plot**, **caret**, **party**, and **partykit**. 
+The packages you will need to install for the week are **knitr**, **class**, **gmodels**, **rpart**, **rpart.plot**, **caret**, **party**, and **partykit**. 
 
 
 # Classification Models
@@ -29,7 +29,7 @@ Since the publication of the Deacon & Case study, public interest in the drug ov
 
 # Map of U.S. Opiate Overdose Death Rate
 
-[map](https://www.kaggle.io/svf/441409/8c6ea1a2aa8cec052ca7959d43ad34a0/__results___files/figure-html/unnamed-chunk-21-1.png)
+[](https://www.kaggle.io/svf/441409/8c6ea1a2aa8cec052ca7959d43ad34a0/__results___files/figure-html/unnamed-chunk-21-1.png)
 
 
 
@@ -101,7 +101,12 @@ kNN is called a "lazy learner" because it does not perform abstraction. Lantz (2
 
 When comparing among neighbors, we need to use a distance function. The most common way to measure distance is **Euclidean distance**, or the shortest direct route. 
 
+![](https://www.packtpub.com/sites/default/files/Article-Images/B03905_01_04.png)
+
+
+
 ![](http://web.stonehill.edu/compsci/cs211/assignments/assign14.jpg)
+
 
 
 
@@ -188,53 +193,81 @@ prescribers_n_test_labels<-prescribers_n[20001:25000,1]
 ```
 
 
-We will use the **class** package to perform kNN.
+We will use the **class** package to perform kNN.  
 
+Lantz (2015) suggested starting with k = square root of the number of observations & using an odd k (page 82).  
 
 ```{r}
 library(class)
-prescribers_pred<-knn(train=prescribers_n_train, test=prescribers_n_test, cl=prescribers_n_train_labels, k=140)
+set.seed(123)
+prescribers_pred_knn<-knn(train=prescribers_n_train, test=prescribers_n_test, cl=prescribers_n_train_labels, k=141)
 ```
 
 
 # Evaluating Model Performance
 
-![](https://www.researchgate.net/profile/Willard_Freeman/publication/43072205/figure/fig1/AS:279029774077960@1443537290471/Figure-1-Metrics-for-assessing-biomarker-performance-Unlike-traditional-statistics-that.png)
+
+
+![](http://rasbt.github.io/mlxtend/user_guide/evaluate/confusion_matrix_files/confusion_matrix_1.png)
 
 
 You have to decide what is a "positive" versus a "negative" case in your dataset! We will label a positive case as someone who did prescribe opioids more than 10 times in 2014. A negative case is someone who did not.
 
-
-True Positives = 2308
-
-True Negatives = 1550
-
-False Positives = 500
-
-False Negatives = 642
-
-
 ```{r}
 library(gmodels)
 
-CrossTable(x=prescribers_n_test_labels, y=prescribers_pred, prob.chisq=FALSE)
+CrossTable(x=prescribers_n_test_labels, y=prescribers_pred_knn, prob.chisq=FALSE)
 
-Sensitivity = (2308/(2308+500))*100
-Specificity = (1550/(1500+642))*100
-Precision = (2308/(2308+500))*100
-Accuracy = ((1550+2308)/5000)*100
-
-print(Accuracy)
 ```
 
 
-Our lazy learner correctly classified **77.16%** of all the medical professionals as individuals who did or did not prescribe opioids more than 10 times in 2014. Not bad for a lazy learner!
+```{r}
+TP = 2265
+TN = 1542
+FP = 509
+FN = 684
+
+Sensitivity = TP/(TP+FN) #true positive rate; recall; TP/(TP+FN)
+Specificity = TN/(TN+FP) #how often is the prediction negative when actual is negative?
+Precision = TP/(TP+FP) #how often is prediction positive when actual is positive?
+Accuracy = (TP+TN)/(TP+TN+FP+FN) #how often is classifier correct
 
 
-# Improving on the kNN Model
+Value<-round(c(TP,TN,FP,FN,Sensitivity,Specificity,Precision,Accuracy),digits=3)
+Measure<-c("True Positive","True Negative","False Positive","False Negative","Sensitivity/Recall=TP/(TN+FP)",
+         "Specificity=TN/(TN+TP)","Precision=TP/(TP+FP)","Accuracy=(TP+TN)/total")
 
-You should play around with the k value to see if you can improve the model performance. Try it!
+table<-as.data.frame(cbind(Measure,Value))
 
+library(knitr)
+
+kable(table)
+```
+
+
+Here is a good link http://www.dataschool.io/simple-guide-to-confusion-matrix-terminology/ with a short tutorial on confusion matrix. 
+
+
+
+# Using the caret package
+
+```{r}
+# take a very long time
+#set.seed(123)
+#library(caret)
+#trainIndex <- createDataPartition(prescribers$Opioid.Prescriber, p = .8,list = FALSE,times = 1)
+#prescribers_train_caret <- prescribers[ trainIndex,]
+#prescribers_test_caret <- prescribers[ -trainIndex,]
+
+#library(caret)
+
+#set.seed(123)
+#prescribers_pred_knn_caret <- train(Opioid.Prescriber ~ ., data=prescribers_train_caret, method="knn",metric="Accuracy", tuneLength=20)
+
+#prescribers_pred_knn_caret
+
+#system.time(prescribers_pred_knn_caret)
+```
 
 # Z score standardization
 
@@ -256,17 +289,34 @@ prescribers_z_test<-prescribers_z[20001:25000, ]
 prescribers_z_train_labels<-prescribers[1:20000,1]
 prescribers_z_test_labels<-prescribers[20001:25000,1]
 
-prescribers_z_pred <- knn(train=prescribers_z_train, test=prescribers_z_test, cl=prescribers_z_train_labels, k=158)
+set.seed(123)
+prescribers_z_pred <- knn(train=prescribers_z_train, test=prescribers_z_test, cl=prescribers_z_train_labels, k=141)
 
 gmodels::CrossTable(x=prescribers_z_test_labels, y=prescribers_z_pred, prop.chisq = FALSE)
-
-Accuracy = ((1466+2191)/5000)*100
-
-print(Accuracy)
 ```
 
-Z-transformation actually reduced the accuracy rate: **77.14%**.
+```{r}
+TP = 2219
+TN = 1442
+FP = 609
+FN = 730
 
+Sensitivity = TP/(TP+FN) #true positive rate; recall; TP/(TP+FN)
+Specificity = TN/(TN+FP) #how often is the prediction negative when actual is negative?
+Precision = TP/(TP+FP) #how often is prediction positive when actual is positive?
+Accuracy = (TP+TN)/(TP+TN+FP+FN) #how often is classifier correct
+
+
+Value<-round(c(TP,TN,FP,FN,Sensitivity,Specificity,Precision,Accuracy),digits=3)
+Measure<-c("True Positive","True Negative","False Positive","False Negative","Sensitivity/Recall=TP/(TN+FP)",
+         "Specificity=TN/(TN+TP)","Precision=TP/(TP+FP)","Accuracy=(TP+TN)/total")
+
+table<-as.data.frame(cbind(Measure,Value))
+
+library(knitr)
+
+kable(table)
+```
 
 
 # Decision Trees: A More Sophisticated Classification Model
@@ -290,7 +340,9 @@ Decision trees follow recursive partitioning (top down greedy divide and conquer
 
 # Splitting Criterion
 
-![](C:\Users\PhamX\Courses\Fall 2016\BIA 6301\Week 2\Splitting_Criterion.jpg)
+![](https://image.slidesharecdn.com/08classbasic-140913212207-phpapp02/95/data-miningconcepts-and-techniques-chapter-8-classification-basic-concepts-13-638.jpg?cb=1410644460)
+![](https://image.slidesharecdn.com/08classbasic-140913212207-phpapp02/95/data-miningconcepts-and-techniques-chapter-8-classification-basic-concepts-16-638.jpg?cb=1410644460)
+![](https://image.slidesharecdn.com/08classbasic-140913212207-phpapp02/95/data-miningconcepts-and-techniques-chapter-8-classification-basic-concepts-17-638.jpg?cb=1410644460)
 
 
 
@@ -298,7 +350,7 @@ Decision trees follow recursive partitioning (top down greedy divide and conquer
 
 
 ```{r}
-set.seed(12345) #set a seed to do draws from a random uniform distribution.
+set.seed(123) #set a seed to do draws from a random uniform distribution.
 prescribers_rand <- prescribers[order(runif(25000)), ] 
 prescribers_train <- prescribers_rand[1:20000, ] #Training data set; 20000 observations
 prescribers_test  <-prescribers_rand[20001:25000, ]
@@ -374,9 +426,6 @@ print(results.matrix)
 ```
 
 
-Notice that our accuracy rate is **75.6%**, which is less than **77.16%** in our kNN model (k=158 and using min-max transformation).
-
-
 
 # Using the Complexity Parameter (CP Value) to Prune the Decision Tree
 
@@ -436,11 +485,7 @@ results.matrix <- confusionMatrix(predicted, actual, positive="yes")
 print(results.matrix)
 ```
 
-
-
-
-Our pruned tree perform nearly as well as our fully grown tree. Accuracy rate is **74.68%** whereas it was previously **75.6%**.
-
+How does accuracy look? Sensitivity? Specificity?
 
 # Exploring rpart.control
 
