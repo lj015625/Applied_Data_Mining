@@ -393,11 +393,50 @@ text(prescribers_rpart, use.n=TRUE, all=TRUE, cex=0.8)
 # Something a bit fancier
 library(rpart.plot)
 rpart.plot(prescribers_rpart, type=0, extra=101)
+```
+
+
+The leaves show the opioid vs. non-opioid prescribers after the split at that node.   
+
+The blue indicates the majority in that subgroup is non-opioid prescribers (negatives). The green indicates the majority in that subgroup is opioid prescribers (positives).  
+
+The label (yes or no) at each node indicates the label of the majority subgroup (“yes” or “no” for being opioid prescribers).  
+
+Starting from the top, we have:  
+
+First split (Levothyroxine.sodium): There were 4,888 medical professionals who prescribed levothyroxine.sodium more than 22 times. Of these people, 4,409 were opioid prescribers and 479 who were not opioid prescribers. This subgroup makes up 24% of the training set [(4,888/20,000)*100% = 0.24].  
+
+Second split (Surgeon): There were 1,347 people out of this 15,112 subgroup who were surgeon (7% of the training set). Of these surgeons, 1,240 were opioid prescribers and 107 who were not opioid prescribers. 
+And so on...
+
+```{r}
 rpart.plot(prescribers_rpart, type=1, extra=101)
+```
+
+The leaves show the opioid vs. non-opioid prescribers.  
+
+The nodes show the opioid vs. non-opioid prescribers before the next split.  
+
+The blue indicates the majority in that subgroup is non-opioid prescribers (negatives). The green indicates the majority in that subgroup is opioid prescribers (positives).  
+
+The label (yes or no) at each node indicates the label of the majority subgroup (“yes” or “no” for being opioid prescribers).  
+
+Starting from the top, we have:  
+
+20,000 people in training set: 8,225 who were not opioid prescribers, and 11,775 who were opioid prescribers. Since the majority of this group were opioid prescribers, the node is green and labeled as “yes.”
+First split (Levothyroxine.sodium): There were 4,888 medical professionals who prescribed levothyroxine.sodium more than 22 times. Of these people, 4,409 were opioid prescribers and 479 who were not opioid prescribers. This subgroup makes up 24% of the training set [(4,888/20,000)*100% = 0.24].  
+
+Now there were 15,112 people who prescribed levothyroxine.sodium less than 22 times (or 76% of the training set). Of this subgroup, 7,746 were not opioid prescribers and 7,366 who were opioid prescribers. Since the majority of this subgroup were not opioid prescribers, the node is blue and “no” is labeled.  
+
+Second split (Surgeon): There were 1,347 people out of this 15,112 subgroup who were surgeon (7% of the training set). Of these surgeons, 1,240 were opioid prescribers and 107 who were not opioid prescribers.  
+
+Now there were 13,765 who did prescribed levothyroxine.sodium less than 22 times AND were not surgeons. Of these people, 7,639 people who were not opioid prescribers and 6,126 people were opioid prescribers.
+And so on….
 
 
 
 # Even fancier?
+```{r}
 library(party)
 library(partykit)
 prescribers_party<-as.party(prescribers_rpart)
@@ -410,10 +449,14 @@ Check out this [vignette](http://www.milbo.org/rpart-plot/prp.pdf) on plotting r
 # A Note on the Drugs in Decision Tree
 
 LEVOTHROXINE.SODIUM: used to treat underactive thyroid (hypothyrodism).  
+
 MELOXICAM: nonsteroid anti-inflammatory drug.  
-PREDNISONE: uses to decease immune system's responses to reduce sweling and allergic-tpe reactions.
-SPIRIVA: controls and prevents symptons caused by ongoing lung disease. 
-SULFAMETHOZAZOLE.TRIMETHOPRIM: uses to treat wide variety of bacterial infections & certain type of pneumonia.
+
+PREDNISONE: uses to decease immune system's responses to reduce sweling and allergic-tpe reactions.  
+
+SPIRIVA: controls and prevents symptons caused by ongoing lung disease.  
+
+SULFAMETHOZAZOLE.TRIMETHOPRIM: uses to treat wide variety of bacterial infections & certain type of pneumonia.  
 
 
 # Evaluating Model Performance
