@@ -95,6 +95,8 @@ table(prescribers$Opioid.Prescriber)
 
 # k-Nearest Neighbor (kNN): A Lazy Classification Model
 
+First, a ![visualization] (http://blog.yhat.com/posts/classification-using-knn-and-python.html)
+
 kNN is called a "lazy learner" because it does not perform abstraction. Lantz (2013) noted:
 
 *In a single sentence, nearest neighbor classifiers are defined by their characteristics of classifying unlabeled examples by assigning them the class of the most similar labeled examples* (Lantz 2013, p. 66).
@@ -195,12 +197,14 @@ prescribers_n_test_labels<-prescribers_n[20001:25000,1]
 
 We will use the **class** package to perform kNN.  
 
-Lantz (2015) suggested starting with k = square root of the number of observations & using an odd k (page 82).  
+Lantz (2015) suggested starting with k = square root of the number of observations & using an odd k (page 82). sqrt(20000) = 141.
+
+Previous tests found that k=15 gives the highest accuracy rate for this data set.
 
 ```{r}
 library(class)
 set.seed(123)
-prescribers_pred_knn<-knn(train=prescribers_n_train, test=prescribers_n_test, cl=prescribers_n_train_labels, k=141)
+prescribers_pred_knn<-knn(train=prescribers_n_train, test=prescribers_n_test, cl=prescribers_n_train_labels, k=15)
 ```
 
 
@@ -253,6 +257,7 @@ Here is a good link http://www.dataschool.io/simple-guide-to-confusion-matrix-te
 
 ```{r}
 # take a very long time
+# k = 15 was chosen. 
 #set.seed(123)
 #library(caret)
 #trainIndex <- createDataPartition(prescribers$Opioid.Prescriber, p = .8,list = FALSE,times = 1)
@@ -268,6 +273,7 @@ Here is a good link http://www.dataschool.io/simple-guide-to-confusion-matrix-te
 
 #system.time(prescribers_pred_knn_caret)
 ```
+
 
 # Z score standardization
 
@@ -290,7 +296,7 @@ prescribers_z_train_labels<-prescribers[1:20000,1]
 prescribers_z_test_labels<-prescribers[20001:25000,1]
 
 set.seed(123)
-prescribers_z_pred <- knn(train=prescribers_z_train, test=prescribers_z_test, cl=prescribers_z_train_labels, k=141)
+prescribers_z_pred <- knn(train=prescribers_z_train, test=prescribers_z_test, cl=prescribers_z_train_labels, k=15)
 
 gmodels::CrossTable(x=prescribers_z_test_labels, y=prescribers_z_pred, prop.chisq = FALSE)
 ```
@@ -452,7 +458,7 @@ LEVOTHROXINE.SODIUM: used to treat underactive thyroid (hypothyrodism).
 
 MELOXICAM: nonsteroid anti-inflammatory drug.  
 
-PREDNISONE: uses to decease immune system's responses to reduce sweling and allergic-tpe reactions.  
+PREDNISONE: uses to decease immune system's responses to reduce sweling and allergic-type reactions.  
 
 SPIRIVA: controls and prevents symptons caused by ongoing lung disease.  
 
